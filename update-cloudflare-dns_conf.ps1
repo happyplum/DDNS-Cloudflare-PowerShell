@@ -1,4 +1,4 @@
-﻿##### Config
+##### Config
 
 ## Which IP should be used for the record: internal/external
 ## Internal interface will be chosen automaticly as a primary default interface
@@ -13,6 +13,7 @@ $DNS_over_HTTPS = $false
 $zoneid = "ChangeMe"
 ## Cloudflare Zone API Token
 $cloudflare_zone_api_token = "ChangeMe"
+$cloudflare_email = "ChangeMe"
 ## Use Cloudflare proxy on dns record true/false
 $proxied = $false
 ## 60-7200 in seconds or 1 for Auto

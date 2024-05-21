@@ -132,7 +132,7 @@ if ($proxied -eq $false) {
 if ($proxied -eq $true) {
   $dns_record_info = @{
     Uri     = "https://api.cloudflare.com/client/v4/zones/$zoneid/dns_records?name=$dns_record"
-    Headers = @{"Authorization" = "Bearer $cloudflare_zone_api_token"; "Content-Type" = "application/json" }
+    Headers = @{"X-Auth-Email" = "$cloudflare_email"; "X-Auth-Key" = "$cloudflare_zone_api_token"; "Content-Type" = "application/json" }
   }
 
   $response = Invoke-RestMethod -Proxy $http_proxy -ProxyCredential $proxy_credential @dns_record_info
@@ -155,7 +155,7 @@ Write-Output "==> DNS record of $dns_record is: $dns_record_ip. Trying to update
 ### Get the dns record information from cloudflare's api
 $cloudflare_record_info = @{
   Uri     = "https://api.cloudflare.com/client/v4/zones/$zoneid/dns_records?name=$dns_record"
-  Headers = @{"Authorization" = "Bearer $cloudflare_zone_api_token"; "Content-Type" = "application/json" }
+  Headers = @{"X-Auth-Email" = "$cloudflare_email"; "X-Auth-Key" = "$cloudflare_zone_api_token"; "Content-Type" = "application/json" }
 }
 
 $cloudflare_record_info_resposne = Invoke-RestMethod -Proxy $http_proxy -ProxyCredential $proxy_credential @cloudflare_record_info
@@ -171,7 +171,7 @@ $dns_record_id = $cloudflare_record_info_resposne.result.id.Trim()
 $update_dns_record = @{
   Uri     = "https://api.cloudflare.com/client/v4/zones/$zoneid/dns_records/$dns_record_id"
   Method  = 'PUT'
-  Headers = @{"Authorization" = "Bearer $cloudflare_zone_api_token"; "Content-Type" = "application/json" }
+  Headers = @{"X-Auth-Email" = "$cloudflare_email"; "X-Auth-Key" = "$cloudflare_zone_api_token"; "Content-Type" = "application/json" }
   Body    = @{
     "type"    = switch ($IPv6) {
         $true { "AAAA" }
