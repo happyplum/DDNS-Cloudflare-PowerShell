@@ -64,16 +64,16 @@ if ($what_ip -eq 'external') {
 ### Get Internal ip from primary interface
 function Get-Ip-Internal {
   param ([bool] $IPv6)
-    
-  if ($IsLinux) {
-    if ($IPv6) {
-      return ip -6 addr | grep inet6 | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^f | sort | head -1
-    }
-    else {
-      return ip -4 addr | grep inet | awk -F '[ \t]+|/' '{print $3}' | grep -v ^127 | grep -v ^192 | grep -v ^f | head -1
-    }
-  }
-  elseif ($IsWindows) {
+
+  # if ($IsLinux) {
+  #   if ($IPv6) {
+  #     return ip -6 addr | grep inet6 | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^f | sort | head -1
+  #   }
+  #   else {
+  #     return ip -4 addr | grep inet | awk -F '[ \t]+|/' '{print $3}' | grep -v ^127 | grep -v ^192 | grep -v ^f | head -1
+  #   }
+  # }
+  # elseif ($IsWindows) {
     $InternalIPTestAddress = switch ($IPv6) {
       $true { "2606:4700::1111" }
       $false { "1.1.1.1" }
@@ -83,10 +83,10 @@ function Get-Ip-Internal {
       return $null
     }
     return $addr
-  }
-  elseif ($IsMacOS) {
-    throw "Get-Internal-IpAddress is not implemented for MacOS."
-  }
+  # }
+  # elseif ($IsMacOS) {
+  #   throw "Get-Internal-IpAddress is not implemented for MacOS."
+  # }
 }
 if ($what_ip -eq 'internal') {
   $ip = Get-Ip-Internal -IPv6 $IPv6
