@@ -44,12 +44,13 @@ if ( ($what_ip -ne "external") -and ($what_ip -ne "internal") ) {
 
 ### Get External ip from internet
 function Get-Ip-External {
-    param ([bool] $IPv6)
-    if ($IPv6) {
-        return (Invoke-RestMethod -Uri "http://v6.ident.me" -TimeoutSec 10).Trim()
-    } else {
-        return (Invoke-RestMethod -Uri "https://checkip.amazonaws.com" -TimeoutSec 10).Trim()
-    }
+  param ([bool] $IPv6)
+  if ($IPv6) {
+    return (Invoke-RestMethod -Uri "http://v6.ident.me" -TimeoutSec 10).Trim()
+  }
+  else {
+    return (Invoke-RestMethod -Uri "https://checkip.amazonaws.com" -TimeoutSec 10).Trim()
+  }
 }
 if ($what_ip -eq 'external') {
   $ip = Get-Ip-External -IPv6 $IPv6
@@ -62,28 +63,30 @@ if ($what_ip -eq 'external') {
 
 ### Get Internal ip from primary interface
 function Get-Ip-Internal {
-    param ([bool] $IPv6)
+  param ([bool] $IPv6)
 
-    if ($IsLinux) {
-        if ($IPv6) {
-            return ip -6 addr | grep inet6 | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^f | sort | head -1
-        }
-        else {
-            return ip -4 addr | grep inet | awk -F '[ \t]+|/' '{print $3}' | grep -v ^127 | grep -v ^192 | grep -v ^f | head -1
-        }
-    } elseif ($IsWindows) {
-        $InternalIPTestAddress = switch ($IPv6) {
-            $true { "2606:4700::1111" }
-            $false { "1.1.1.1" }
-        }
-        $addr = $((Find-NetRoute -RemoteIPAddress $InternalIPTestAddress).IPAddress|out-string).Trim()
-        if ($addr -eq "127.0.0.1" -or $addr -eq "::1") {
-            return $null
-        }
-        return $addr
-    } elseif ($IsMacOS) {
-        throw "Get-Internal-IpAddress is not implemented for MacOS."
+  if ($IsLinux) {
+    if ($IPv6) {
+      return ip -6 addr | grep inet6 | awk -F '[ \t]+|/' '{print $3}' | grep -v ^::1 | grep -v ^f | sort | head -1
     }
+    else {
+      return ip -4 addr | grep inet | awk -F '[ \t]+|/' '{print $3}' | grep -v ^127 | grep -v ^192 | grep -v ^f | head -1
+    }
+  }
+  elseif ($IsWindows) {
+    $InternalIPTestAddress = switch ($IPv6) {
+      $true { "2606:4700::1111" }
+      $false { "1.1.1.1" }
+    }
+    $addr = $((Find-NetRoute -RemoteIPAddress $InternalIPTestAddress).IPAddress | out-string).Trim()
+    if ($addr -eq "127.0.0.1" -or $addr -eq "::1") {
+      return $null
+    }
+    return $addr
+  }
+  elseif ($IsMacOS) {
+    throw "Get-Internal-IpAddress is not implemented for MacOS."
+  }
 }
 if ($what_ip -eq 'internal') {
   $ip = Get-Ip-Internal -IPv6 $IPv6
@@ -97,27 +100,28 @@ if ($what_ip -eq 'internal') {
 
 ### Get IP address of DNS record from 1.1.1.1 DNS server when proxied is "false"
 function Resolve-DnsName-From-Cloudflare {
-    param ([bool] $DoH, [string] $domain, [bool] $IPv6)
-    $type = switch ($IPv6) {
-        $true { "AAAA" }
-        $false { "A" }
+  param ([bool] $DoH, [string] $domain, [bool] $IPv6)
+  $type = switch ($IPv6) {
+    $true { "AAAA" }
+    $false { "A" }
+  }
+  if ($DoH) {
+    $response = Invoke-RestMethod -Proxy $http_proxy -ProxyCredential $proxy_credential -Uri https://cloudflare-dns.com/dns-query -Body @{
+      name = $domain
+      type = $type
+    } -Headers @{ 'Accept' = 'application/dns-json' }
+    if ($response) {
+      return $response.Answer[0].data
     }
-    if ($DoH) {
-        $response = Invoke-RestMethod -Proxy $http_proxy -ProxyCredential $proxy_credential -Uri https://cloudflare-dns.com/dns-query -Body @{
-            name = $domain
-            type = $type
-        } -Headers @{ 'Accept' = 'application/dns-json' }
-        if ($response) {
-            return $response.Answer[0].data
-        }
-        return $null
-    } else {
-        $ip = (Resolve-DnsName -Name $domain -Server 1.1.1.1 -Type $type | Select-Object -First 1)
-        if ($ip) {
-          return $ip.IPAddress.Trim()
-        }
-        return $null
+    return $null
+  }
+  else {
+    $ip = (Resolve-DnsName -Name $domain -Server 1.1.1.1 -Type $type | Select-Object -First 1)
+    if ($ip) {
+      return $ip.IPAddress.Trim()
     }
+    return $null
+  }
 }
 if ($proxied -eq $false) {
   $dns_record_ip = Resolve-DnsName-From-Cloudflare -DoH $DNS_over_HTTPS -domain $dns_record -IPv6 $IPv6
@@ -174,8 +178,8 @@ $update_dns_record = @{
   Headers = @{"X-Auth-Email" = "$cloudflare_email"; "X-Auth-Key" = "$cloudflare_zone_api_token"; "Content-Type" = "application/json" }
   Body    = @{
     "type"    = switch ($IPv6) {
-        $true { "AAAA" }
-        $false { "A" }
+      $true { "AAAA" }
+      $false { "A" }
     }
     "name"    = $dns_record
     "content" = $ip
@@ -194,7 +198,7 @@ Write-Output "==> Success!" | Tee-Object $File_LOG -Append
 Write-Output "==> $dns_record DNS Record Updated To: $ip, ttl: $ttl, proxied: $proxied" | Tee-Object $File_LOG -Append
 
 
-if ($notify_me_telegram -eq "no" -And $notify_me_discord -eq "no")   {
+if ($notify_me_telegram -eq "no" -And $notify_me_discord -eq "no") {
   Exit
 }
 
@@ -212,19 +216,20 @@ if ($notify_me_telegram -eq "yes") {
 
 if ($notify_me_discord -eq "yes") {
   $discord_message = "$dns_record DNS Record Updated To: $ip (was $dns_record_ip)"
-  $discord_payload = [PSCustomObject]@{content = $discord_message} | ConvertTo-Json
+  $discord_payload = [PSCustomObject]@{content = $discord_message } | ConvertTo-Json
   $discord_notification = @{
-    Uri    = $discord_webhook_URL
-    Method = 'POST'
-    Body = $discord_payload
+    Uri     = $discord_webhook_URL
+    Method  = 'POST'
+    Body    = $discord_payload
     Headers = @{ "Content-Type" = "application/json" }
   }
-    try {
-      Invoke-RestMethod -Proxy $http_proxy -ProxyCredential $proxy_credential @discord_notification
-    } catch {
-      Write-Host "==> Discord notification request failed. Here are the details for the exception:" | Tee-Object $File_LOG -Append
-      Write-Host "==> Request StatusCode:" $_.Exception.Response.StatusCode.value__  | Tee-Object $File_LOG -Append
-      Write-Host "==> Request StatusDescription:" $_.Exception.Response.StatusDescription | Tee-Object $File_LOG -Append
-    }
-    Exit
+  try {
+    Invoke-RestMethod -Proxy $http_proxy -ProxyCredential $proxy_credential @discord_notification
+  }
+  catch {
+    Write-Host "==> Discord notification request failed. Here are the details for the exception:" | Tee-Object $File_LOG -Append
+    Write-Host "==> Request StatusCode:" $_.Exception.Response.StatusCode.value__  | Tee-Object $File_LOG -Append
+    Write-Host "==> Request StatusDescription:" $_.Exception.Response.StatusDescription | Tee-Object $File_LOG -Append
+  }
+  Exit
 }
