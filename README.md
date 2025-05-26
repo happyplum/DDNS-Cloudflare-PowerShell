@@ -1,3 +1,5 @@
+Fork 回滚了 ipv6 的支持，不在进行同步
+
 # DDNS Cloudflare PowerShell Script
 
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/fire1ce/3os.org/tree/master/src)
@@ -41,7 +43,7 @@ Update the config parameters inside the update-cloudflare-dns_conf.ps1 by editin
 | ------------------------- | ---------------- | --------------------------------------------------------- |
 | what_ip                   | internal         | Which IP should be used for the record: internal/external |
 | dns_record                | ddns.example.com | DNS **A** record which will be updated                    |
-| cloudflare_zone_api_token | ChangeMe         | Cloudflare API Token **KEEP IT PRIVATE!!!!**               |
+| cloudflare_zone_api_token | ChangeMe         | Cloudflare API Token **KEEP IT PRIVATE!!!!**              |
 | zoneid                    | ChangeMe         | Cloudflare's Zone ID                                      |
 | proxied                   | false            | Use Cloudflare proxy on dns record true/false             |
 | ttl                       | 120              | 120-7200 in seconds or 1 for Auto                         |
@@ -56,12 +58,13 @@ Update the config parameters inside the update-cloudflare-dns_conf.ps1 by editin
 
 ### Optional Notification Parameters for Discord
 
-| **Option**             | **Example**                  | **Description**                               |
-| ---------------------- | ---------------------------- | --------------------------------------------- |
-| notify_me_discord      | yes                          | Use Discord notifications yes/no              |
-| discord_webhook_URL    | http://WebhookURL.com/asd/   | Webhook URL from your Discord server settings |
+| **Option**          | **Example**                | **Description**                               |
+| ------------------- | -------------------------- | --------------------------------------------- |
+| notify_me_discord   | yes                        | Use Discord notifications yes/no              |
+| discord_webhook_URL | http://WebhookURL.com/asd/ | Webhook URL from your Discord server settings |
 
-To generate a webhook URL, follow the [official Discord instructions](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks). 
+To generate a webhook URL, follow the [official Discord instructions](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
+
 ## Running The Script
 
 Open cmd/powershell
@@ -101,7 +104,7 @@ Run at boot with 1 min delay and repeat every 1 min
 
 ## Logs
 
-This Script will create a log file with **only** the last run information  
+This Script will create a log file with **only** the last run information
 Log file will be located as same directory as _update-cloudflare-dns.ps1_
 
 Log file name:
@@ -137,6 +140,6 @@ IN THE SOFTWARE.
 <!-- urls -->
 <!-- appendices -->
 
-[cloudflare-api-token-url]: https://dash.cloudflare.com/profile/api-tokens 'Cloudflare API Token'
+[cloudflare-api-token-url]: https://dash.cloudflare.com/profile/api-tokens "Cloudflare API Token"
 
 <!-- end appendices -->
