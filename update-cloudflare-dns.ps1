@@ -123,29 +123,24 @@ function Resolve-DnsName-From-Cloudflare {
     return $null
   }
 }
-if ($proxied -eq $false) {
-  $dns_record_ip = Resolve-DnsName-From-Cloudflare -DoH $DNS_over_HTTPS -domain $dns_record -IPv6 $IPv6
-  if (![bool]$dns_record_ip) {
-    Write-Output "Error! Can't resolve the ${dns_record} via 1.1.1.1 DNS server" | Tee-Object $File_LOG -Append
-    Exit
+
+$dns_record_info = @{
+  Uri     = "https://api.cloudflare.com/client/v4/zones/$zoneid/dns_records?name=$dns_record"
+  Headers = @{"X-Auth-Email" = "$cloudflare_email"; "X-Auth-Key" = "$cloudflare_zone_api_token"; "Content-Type" = "application/json" }
+  Body    = @{
+    "type" = switch ($IPv6) {
+      $true { "AAAA" }
+      $false { "A" }
+    }
   }
-  $is_proxed = $proxied
 }
 
-### Get the dns record id and current proxy status from cloudflare's api when proxied is "true"
-if ($proxied -eq $true) {
-  $dns_record_info = @{
-    Uri     = "https://api.cloudflare.com/client/v4/zones/$zoneid/dns_records?name=$dns_record"
-    Headers = @{"X-Auth-Email" = "$cloudflare_email"; "X-Auth-Key" = "$cloudflare_zone_api_token"; "Content-Type" = "application/json" }
-  }
-
-  $response = Invoke-RestMethod -Proxy $http_proxy -ProxyCredential $proxy_credential @dns_record_info
-  if ($response.success -ne "True") {
-    Write-Output "Error! Can't get dns record info from cloudflare's api" | Tee-Object $File_LOG -Append
-  }
-  $is_proxed = $response.result.proxied
-  $dns_record_ip = $response.result.content.Trim()
+$response = Invoke-RestMethod @dns_record_info
+if ($response.success -ne "True") {
+  Write-Output "Error! Can't get dns record info from cloudflare's api" | Tee-Object $File_LOG -Append
 }
+$is_proxed = $response.result.proxied
+$dns_record_ip = $response.result.content.Trim()
 
 
 ### Check if ip or proxy have changed
@@ -156,20 +151,8 @@ if (($dns_record_ip -eq $ip) -and ($is_proxed -eq $proxied)) {
 
 Write-Output "==> DNS record of $dns_record is: $dns_record_ip. Trying to update..." | Tee-Object $File_LOG -Append
 
-### Get the dns record information from cloudflare's api
-$cloudflare_record_info = @{
-  Uri     = "https://api.cloudflare.com/client/v4/zones/$zoneid/dns_records?name=$dns_record"
-  Headers = @{"X-Auth-Email" = "$cloudflare_email"; "X-Auth-Key" = "$cloudflare_zone_api_token"; "Content-Type" = "application/json" }
-}
-
-$cloudflare_record_info_resposne = Invoke-RestMethod -Proxy $http_proxy -ProxyCredential $proxy_credential @cloudflare_record_info
-if ($cloudflare_record_info_resposne.success -ne "True") {
-  Write-Output "Error! Can't get $dns_record record inforamiton from cloudflare API" | Tee-Object $File_LOG -Append
-  Exit
-}
-
 ### Get the dns record id from response
-$dns_record_id = $cloudflare_record_info_resposne.result.id.Trim()
+$dns_record_id = $response.result.id.Trim()
 
 ### Push new dns record information to cloudflare's api
 $update_dns_record = @{
